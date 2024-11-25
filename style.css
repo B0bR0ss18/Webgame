@@ -1,0 +1,113 @@
+/* Reset some default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(to bottom, #87CEEB, #ffffff);
+    color: #333;
+}
+
+/* Game container */
+#game-container {
+    width: 100vw;
+    height: 100vh;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Start screen styles */
+#start-screen {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Character selection styles */
+.character-select {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.character-option {
+    width: 50px; /* Increased size for better visibility */
+    height: 75px; /* Increased size for better visibility */
+    border: 2px solid #333;
+    cursor: pointer;
+    transition: transform 0.2s, border-color 0.2s;
+    border-radius: 5px;
+}
+
+.character-option:hover {
+    transform: scale(1.1); /* Scale up on hover */
+}
+
+.character-option.selected {
+    border-color: #00ff00; /* Highlight selected character */
+}
+
+/* Button styles */
+#start-btn {
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+}
+
+#start-btn:hover {
+    background: #45a049;
+    transform: scale(1.05); /* Scale button slightly on hover */
+}
+
+/* Info overlay styles */
+.info-overlay {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(255, 255, 255, 0.9);
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+
+/* General styles for text in overlays */
+.info-overlay h2 {
+    margin-bottom: 1rem;
+}
+
+.info-overlay p {
+    margin-bottom: 1rem;
+}
+
+/* Button in overlays */
+.info-overlay button {
+    padding: 0.5rem 1rem;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.info-overlay button:hover {
+    background: #45a049;
+}

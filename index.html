@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="styles.css">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CV Runner Game</title>
@@ -154,21 +155,21 @@
         const levelDesigns = [
             // Level 1
             [
-                new Platform(600, canvas.height - 150, 200, 20),
-                new Platform(900, canvas.height - 200, 200, 20),
-                new Platform(1200, canvas.height - 150, 200, 20),
-                new Platform(1500, canvas.height - 250, 200, 20),
-                new Platform(1800, canvas.height - 150, 200, 20),
-                new Platform(2100, canvas.height - 200, 200, 20),
+                new Platform(600, canvas.height - -250, 200, 20),
+                new Platform(900, canvas.height - -300, 200, 20),
+                new Platform(1200, canvas.height - -250, 200, 20),
+                new Platform(1500, canvas.height - -350, 200, 20),
+                new Platform(1800, canvas.height - -250, 200, 20),
+                new Platform(2100, canvas.height - -300, 200, 20),
             ],
             // Level 2 (add more levels as needed)
             [
-                new Platform(600, canvas.height - 600, 222, 222),
-                new Platform(900, canvas.height - 600, 50, 50),
-                new Platform(1200, canvas.height - 600, 100, 100),
-                new Platform(1500, canvas.height - 600, 210, 210, 'spike'),
-                new Platform(1800, canvas.height - 600, 90, 90),
-                new Platform(2100, canvas.height - 600, 30, 30),
+                new Platform(600, canvas.height - -150, 200, 20),
+                new Platform(900, canvas.height - -200, 200, 20),
+                new Platform(1200, canvas.height - -250, 200, 20),
+                new Platform(1500, canvas.height - -400, 200, 100, 'spike'),
+                new Platform(1800, canvas.height - -150, 200, 20),
+                new Platform(2100, canvas.height - -250, 200, 20),
             ]
         ];
 
@@ -380,7 +381,8 @@
             document.getElementById('cv-info').innerHTML = `
                 <h2>Level ${level} Complete!</h2>
                 <h3>${cvContent}</h3>
-                <p>Details about ${cvContent} Click here for more information</p>
+                <a href="https://github.com/B0bR0ss18/Webgame">Details</a>
+                <h3></h3>
                 <button onclick="continueGame()">Continue to Level ${level + 1}</button>
             `;
         }
