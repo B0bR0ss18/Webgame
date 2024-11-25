@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Runner Game</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            background: #87CEEB;
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 10px;
+        }
+
+        .character-select {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .character-option {
+            width: 30px;
+            height: 50px;
+            border: 2px solid #333;
+            cursor: pointer;
+        }
+
+        .character-option.selected {
+            border-color: #00ff00;
+        }
+
+        #game-canvas {
+            display: none;
+        }
+
+        .info-overlay {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        #start-btn {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        #start-btn:hover {
+            background: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="start-screen">
+            <h1>CV Runner Game</h1>
+            <!-- CHANGE ME PLEASE -->
+            <h2>Created by [Your Name]</h2>
+            <div class="character-select">
+                <div class="character-option" data-char="1" style="background: red;"></div>
+                <div class="character-option" data-char="2" style="background: blue;"></div>
+                <div class="character-option" data-char="3" style="background: green;"></div>
+            </div>
+            <button id="start-btn">START</button>
+        </div>
+        <canvas id="game-canvas"></canvas>
+        <div class="info-overlay" id="tutorial">
+            <h2>Controls</h2>
+            <p>LEFT/RIGHT - Control Speed</p>
+            <p>UP - Jump (Press again for Double Jump!)</p>
+            <p>DOWN - Crouch</p>
+            <button onclick="startLevel(1)">Got it!</button>
+        </div>
+        <div class="info-overlay" id="cv-info">
+            <!-- CHANGE ME PLEASE -->
+            <h2>CV Information</h2>
+            <p>This is where your CV information will appear.</p>
+            <button onclick="continueGame()">Continue</button>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            character: null,
+            level: 0,
+            characterPos: { x: 200, y: 0 },
+            velocity: { x: 5, y: 0 },
+            canJump: true,
+            doubleJumpAvailable: true,
+            isCrouching: false,
+            scrollOffset: 0,
+            platformSections: [],
+            characterHeight: 50,
+            characterWidth: 30
+        };
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        let animationId;
+
+        // Platform class for obstacles
+        class Platform {
+            constructor(x, y, width, height, type = 'normal') {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.type = type;
+            }
+
+            draw() {
+                if (this.type === 'spike') {
+                    ctx.fillStyle = '#FF0000';
+                    ctx.beginPath();
+                    ctx.moveTo(this.x - gameState.scrollOffset, this.y + this.height);
+                    ctx.lineTo(this.x + this.width/2 - gameState.scrollOffset, this.y);
+                    ctx.lineTo(this.x + this.width - gameState.scrollOffset, this.y + this.height);
+                    ctx.fill();
+                } else {
+                    ctx.fillStyle = '#666';
+                    ctx.fillRect(this.x - gameState.scrollOffset, this.y, this.width, this.height);
+                }
+            }
+        }
+
+        // Level designs
+        const levelDesigns = [
+            // Level 1
+            [
+                new Platform(600, canvas.height - 150, 200, 20),
+                new Platform(900, canvas.height - 200, 200, 20),
+                new Platform(1200, canvas.height - 150, 200, 20),
+                new Platform(1500, canvas.height - 250, 200, 20),
+                new Platform(1800, canvas.height - 150, 200, 20),
+                new Platform(2100, canvas.height - 200, 200, 20),
+            ],
+            // Level 2 (add more levels as needed)
+            [
+                new Platform(600, canvas.height - 150, 200, 20),
+                new Platform(900, canvas.height - 200, 200, 20),
+                new Platform(1200, canvas.height - 250, 200, 20),
+                new Platform(1500, canvas.height - 200, 200, 20, 'spike'),
+                new Platform(1800, canvas.height - 150, 200, 20),
+                new Platform(2100, canvas.height - 250, 200, 20),
+            ]
+        ];
+
+        // Character selection
+        document.querySelectorAll('.character-option').forEach(option => {
+            option.addEventListener('click', () => {
+                document.querySelectorAll('.character-option').forEach(opt => 
+                    opt.classList.remove('selected'));
+                option.classList.add('selected');
+                gameState.character = option.dataset.char;
+            });
+        });
+
+        // Start button handler
+        document.getElementById('start-btn').addEventListener('click', () => {
+            if (!gameState.character) {
+                alert('Please select a character first!');
+                return;
+            }
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-canvas').style.display = 'block';
+            document.getElementById('tutorial').style.display = 'block';
+            initGame();
+        });
+
+        function initGame() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gameState.characterPos.y = canvas.height - 150;
+            gameState.platformSections = levelDesigns[0];
+
+            // Event listeners for controls
+            window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
+        }
+
+        function handleKeyDown(e) {
+            switch(e.key) {
+                case 'ArrowLeft':
+                    gameState.velocity.x = 2;
+                    break;
+                case 'ArrowRight':
+                    gameState.velocity.x = 8;
+                    break;
+                case 'ArrowUp':
+                    jump();
+                    break;
+                case 'ArrowDown':
+                    if (!gameState.isCrouching) {
+                        gameState.isCrouching = true;
+                        gameState.characterHeight = 35; // 70% of original height
+                    }
+                    break;
+            }
+        }
+
+        function handleKeyUp(e) {
+            switch(e.key) {
+                case 'ArrowLeft':
+                case 'ArrowRight':
+                    gameState.velocity.x = 5;
+                    break;
+                case 'ArrowDown':
+                    gameState.isCrouching = false;
+                    gameState.characterHeight = 50;
+                    break;
+            }
+        }
+
+        function jump() {
+            if (gameState.canJump) {
+                gameState.velocity.y = -15;
+                gameState.canJump = false;
+                gameState.doubleJumpAvailable = true;
+            } else if (gameState.doubleJumpAvailable) {
+                gameState.velocity.y = -12;
+                gameState.doubleJumpAvailable = false;
+            }
+        }
+
+        function drawGround() {
+            const tileSize = 50;
+            const numTiles = Math.ceil(canvas.width / tileSize) + 1;
+            const offset = Math.floor(gameState.scrollOffset % tileSize);
+            
+            for (let i = 0; i < numTiles; i++) {
+                ctx.fillStyle = (Math.floor((i + Math.floor(gameState.scrollOffset / tileSize)) % 2) === 0) 
+                    ? '#8B4513' // brown
+                    : '#228B22'; // green
+                ctx.fillRect(i * tileSize - offset, canvas.height - 50, tileSize, 50);
+            }
+        }
+
+        function checkPlatformCollisions() {
+            for (const platform of gameState.platformSections) {
+                if (gameState.characterPos.x + gameState.characterWidth > platform.x - gameState.scrollOffset &&
+                    gameState.characterPos.x < platform.x - gameState.scrollOffset + platform.width &&
+                    gameState.characterPos.y + gameState.characterHeight > platform.y &&
+                    gameState.characterPos.y < platform.y + platform.height) {
+                    
+                    if (platform.type === 'spike') {
+                        // Reset level on spike collision
+                        resetLevel();
+                        return;
+                    }
+
+                    // Handle normal platform collision
+                    if (gameState.velocity.y > 0) {
+                        gameState.characterPos.y = platform.y - gameState.characterHeight;
+                        gameState.velocity.y = 0;
+                        gameState.canJump = true;
+                    }
+                }
+            }
+        }
+
+        function resetLevel() {
+            gameState.characterPos.y = canvas.height - 150;
+            gameState.scrollOffset = 0;
+            gameState.velocity.y = 0;
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update scroll offset based on velocity
+            gameState.scrollOffset += gameState.velocity.x;
+
+            // Apply gravity
+            gameState.velocity.y += 0.8;
+            
+            // Update vertical position
+            gameState.characterPos.y += gameState.velocity.y;
+
+            // Ground collision
+            if (gameState.characterPos.y > canvas.height - 100) {
+                gameState.characterPos.y = canvas.height - 100;
+                gameState.velocity.y = 0;
+                gameState.canJump = true;
+            }
+
+            // Draw ground
+            drawGround();
+
+            // Draw platforms
+            gameState.platformSections.forEach(platform => platform.draw());
+
+            // Draw character
+            ctx.fillStyle = ['red', 'blue', 'green'][gameState.character - 1];
+            ctx.fillRect(
+                gameState.characterPos.x, 
+                gameState.characterPos.y, 
+                gameState.characterWidth, 
+                gameState.characterHeight
+            );
+
+            // Check platform collisions
+            checkPlatformCollisions();
+
+            // Check if level is complete
+            if (gameState.scrollOffset > 2500) {
+                showCVInfo(gameState.level);
+                return;
+            }
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function startLevel(level) {
+            document.getElementById('tutorial').style.display = 'none';
+            document.getElementById('cv-info').style.display = 'none';
+            gameState.level = level;
+            gameState.scrollOffset = 0;
+            gameState.platformSections = levelDesigns[level - 1] || levelDesigns[0];
+            showLevelMessage(level);
+            gameLoop();
+        }
+
+        function showLevelMessage(level) {
+            const message = document.createElement('div');
+            message.style.cssText = `
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: rgba(255, 255, 255, 0.9);
+                padding: 2rem;
+                border-radius: 10px;
+                text-align: center;
+            `;
+            message.innerHTML = `<h2>Level ${level}</h2>`;
+            document.body.appendChild(message);
+            setTimeout(() => message.remove(), 2000);
+        }
+
+        function showCVInfo(level) {
+            cancelAnimationFrame(animationId);
+            document.getElementById('cv-info').style.display = 'block';
+            
+            // CHANGE ME PLEASE
+            const cvContent = [
+                "Education: German Highschool Diploma and Working on a Bachelorin Cybersecurity",
+                "Work Experience: I have Worked as a promoter",
+                "Skills: Python, HTML",
+                "Projects: This open source CV game you are playing now",
+                "Languages: German, English",
+                ][level - 1];
+            
+            document.getElementById('cv-info').innerHTML = `
+                <h2>Level ${level} Complete!</h2>
+                <h3>${cvContent}</h3>
+                <p>Details about ${cvContent} go here...</p>
+                <button onclick="continueGame()">Continue to Level ${level + 1}</button>
+            `;
+        }
+
+        function continueGame() {
+            document.getElementById('cv-info').style.display = 'none';
+            resetLevel();
+            startLevel(gameState.level + 1);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+    </script>
+</body>
+</html>
